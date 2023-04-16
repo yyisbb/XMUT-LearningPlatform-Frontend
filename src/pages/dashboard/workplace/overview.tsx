@@ -15,6 +15,7 @@ import IconCalendar from './assets/calendar.svg';
 import IconComments from './assets/comments.svg';
 import IconContent from './assets/content.svg';
 import IconIncrease from './assets/increase.svg';
+import { useUserInfoStore } from '@/store/user';
 
 const { Row, Col } = Grid;
 
@@ -56,6 +57,7 @@ type DataType = {
 function Overview() {
   const [data, setData] = useState<DataType>({});
   const [loading, setLoading] = useState(true);
+  const userInfo = useUserInfoStore((state) => state.userInfo);
 
   const fetchData = () => {
     setLoading(true);
@@ -75,7 +77,9 @@ function Overview() {
 
   return (
     <Card>
-      <Typography.Title heading={5}>欢迎回来， 用户名....</Typography.Title>
+      <Typography.Title heading={5}>
+        欢迎回来， {userInfo.name}
+      </Typography.Title>
       <Divider />
       <Row>
         <Col flex={1}>

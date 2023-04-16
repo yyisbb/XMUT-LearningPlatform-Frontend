@@ -26,14 +26,19 @@ import IconButton from './IconButton';
 import styles from './style/index.module.less';
 import useStorage from '@/utils/useStorage';
 import { removeToken } from '@/store/token';
+import { useUserInfoStore } from '@/store/user';
+import { shallow } from 'zustand/shallow';
 
 function Navbar({}: { show: boolean }) {
   const [role, setRole] = useStorage('userRole', 'admin');
 
   const { theme, setTheme } = useContext(GlobalContext);
+  const userInfo = useUserInfoStore((state) => state.userInfo);
+  const setUserInfo = useUserInfoStore((state) => state.setUserInfo, shallow);
 
   function logout() {
     removeToken();
+    setUserInfo({});
     window.location.href = '/login';
   }
 
@@ -65,40 +70,10 @@ function Navbar({}: { show: boolean }) {
 
   const droplist = (
     <Menu onClickMenuItem={onMenuItemClick}>
-      <Menu.SubMenu
-        key="role"
-        title={
-          <>
-            <IconUser className={styles['dropdown-icon']} />
-            <span className={styles['user-role']}>
-              {role === 'admin' ? '管理员' : '普通用户'}
-            </span>
-          </>
-        }
-      >
-        <Menu.Item onClick={handleChangeRole} key="switch role">
-          <IconTag className={styles['dropdown-icon']} />
-          切换角色
-        </Menu.Item>
-      </Menu.SubMenu>
       <Menu.Item key="setting">
         <IconSettings className={styles['dropdown-icon']} />
         用户设置
       </Menu.Item>
-      <Menu.SubMenu
-        key="more"
-        title={
-          <div style={{ width: 80 }}>
-            <IconExperiment className={styles['dropdown-icon']} />
-            查看更多
-          </div>
-        }
-      >
-        <Menu.Item key="workplace">
-          <IconDashboard className={styles['dropdown-icon']} />
-          工作台
-        </Menu.Item>
-      </Menu.SubMenu>
 
       <Divider style={{ margin: '4px 0' }} />
       <Menu.Item key="logout">
@@ -140,8 +115,8 @@ function Navbar({}: { show: boolean }) {
 
         <li>
           <Dropdown droplist={droplist} position="br">
-            <Avatar size={32} style={{ cursor: 'pointer' }}>
-              <img alt="avatar" src="http://localhost:888" />
+            <Avatar size={32} style={{ backgroundColor: '#00d0b6' }}>
+              {userInfo.name}
             </Avatar>
           </Dropdown>
         </li>

@@ -23,6 +23,24 @@ export const routes: IRoute[] = [
     ],
   },
   {
+    name: '系统管理',
+    key: 'settings',
+    children: [
+      {
+        name: '用户管理',
+        key: 'systemManager/userList',
+      },
+      {
+        name: '角色管理',
+        key: 'systemManager/roleList',
+      },
+      {
+        name: 'API管理',
+        key: 'systemManager/apiList',
+      },
+    ],
+  },
+  {
     name: '示例',
     key: 'example',
   },

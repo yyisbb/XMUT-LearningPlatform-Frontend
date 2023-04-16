@@ -9,46 +9,30 @@ import { useHistory } from 'react-router';
 import { useUserInfoStore } from '@/store/user';
 import { shallow } from 'zustand/shallow';
 
-interface LoginForm {
+interface RegisterForm {
   pageChange?: boolean;
   setPageChange?: (b: boolean) => void;
 }
-export default function LoginForm(props: LoginForm) {
+
+export default function Register(props: RegisterForm) {
   const formRef = useRef<FormInstance>();
   const [loading, setLoading] = useState(false);
   const history = useHistory();
   const setUserInfo = useUserInfoStore((state) => state.setUserInfo, shallow);
   const userInfo = useUserInfoStore((state) => state.userInfo);
 
-  const fetchUserInfo = () => {
-    if (getToken() || !userInfo) {
-      getUserInfo()
-        .then((res) => {
-          //存store
-          setUserInfo(res);
-          return;
-        })
-        .catch((e) => {
-          Message.error(e);
-        });
-    }
-  };
-
-  function login(params) {
+  function register(params) {
     setLoading(true);
-    loginAPI({ ...params })
-      .then((res) => {
-        setToken(res);
-        Message.success('登录成功');
-        history.push('/dashboard/workplace');
-        fetchUserInfo();
-      })
-      .catch((e) => {
-        Message.error(e);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    console.log(params);
+    /*loginAPI({...params}).then((res) => {
+            setToken(res);
+            Message.success('登录成功')
+            history.push('/dashboard/workplace')
+        }).catch(e => {
+            Message.error(e)
+        }).finally(() => {
+            setLoading(false);
+        });*/
   }
 
   useEffect(() => {
@@ -59,20 +43,15 @@ export default function LoginForm(props: LoginForm) {
 
   function onSubmitClick() {
     formRef.current.validate().then((values) => {
-      login(values);
+      register(values);
     });
   }
 
   return (
     <div className={styles['login-form-wrapper']}>
-      <div className={styles['login-form-title']}>登录 Arco Design Pro</div>
-      <div className={styles['login-form-sub-title']}>登录 Arco Design Pro</div>
-      <Form
-        className={styles['login-form']}
-        layout="vertical"
-        ref={formRef}
-        initialValues={{ username: 'admin', password: 'admin' }}
-      >
+      <div className={styles['login-form-title']}>注册 Arco Design Pro</div>
+      <div className={styles['login-form-sub-title']}>注册 Arco Design Pro</div>
+      <Form className={styles['login-form']} layout="vertical" ref={formRef}>
         <Form.Item
           field="username"
           rules={[{ required: true, message: '用户名不能为空' }]}
@@ -93,9 +72,29 @@ export default function LoginForm(props: LoginForm) {
             onPressEnter={onSubmitClick}
           />
         </Form.Item>
+        <Form.Item
+          field="name"
+          rules={[{ required: true, message: '姓名不能为空' }]}
+        >
+          <Input.Password
+            prefix={<IconLock />}
+            placeholder="请输入姓名"
+            onPressEnter={onSubmitClick}
+          />
+        </Form.Item>
+        <Form.Item
+          field="email"
+          rules={[{ required: true, message: '邮箱不能为空' }]}
+        >
+          <Input.Password
+            prefix={<IconLock />}
+            placeholder="请输入邮箱"
+            onPressEnter={onSubmitClick}
+          />
+        </Form.Item>
         <Space size={16} direction="vertical">
           <Button type="primary" long onClick={onSubmitClick} loading={loading}>
-            登录
+            注册
           </Button>
           <Button
             onClick={() => {
@@ -103,9 +102,9 @@ export default function LoginForm(props: LoginForm) {
             }}
             long
             type="primary"
-            status={'warning'}
+            status={'success'}
           >
-            注册
+            登录
           </Button>
         </Space>
       </Form>

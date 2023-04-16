@@ -1,9 +1,13 @@
 import { request } from '@/api';
 
-export async function login(opts: { username: string; password: string }) {
+export async function loginAPI(opts: { username: string; password: string }) {
   return request.post<any, string>('/user/login', opts);
 }
 
 export async function getUserInfo() {
-  return request.get<any, any>('/user/userinfo');
+  return request.post<any, any>('/user/getUserInfo');
+}
+
+export async function getAllUser(opts: any) {
+  return request.post<any, any>('/user/getAllUser', opts);
 }

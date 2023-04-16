@@ -1,7 +1,7 @@
 import './style/global.less';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
-import { ConfigProvider } from '@arco-design/web-react';
+import { ConfigProvider, Message } from '@arco-design/web-react';
 import zhCN from '@arco-design/web-react/es/locale/zh-CN';
 import { BrowserRouter, Switch, Route } from 'react-router-dom';
 import PageLayout from './layout';
@@ -10,23 +10,32 @@ import Login from './pages/login';
 import changeTheme from './utils/changeTheme';
 import useStorage from './utils/useStorage';
 import './mock';
+import { useUserInfoStore } from '@/store/user';
+import { getUserInfo, loginAPI } from '@/api/user';
+import { getToken, setToken } from '@/store/token';
+import { shallow } from 'zustand/shallow';
 
 function Index() {
-  const [lang, setLang] = useStorage('arco-lang', 'en-US');
+  const [lang, setLang] = useStorage('arco-lang', 'zh-CN');
   const [theme, setTheme] = useStorage('arco-theme', 'light');
-  /*function fetchUserInfo() {
-    //TODO update-userInfo
-    /!*store.dispatch({
-          type: 'update-userInfo',
-          payload: { userLoading: true },
+  const setUserInfo = useUserInfoStore((state) => state.setUserInfo, shallow);
+  const userInfo = useUserInfoStore((state) => state.userInfo);
+  const fetchUserInfo = () => {
+    if (getToken() || !userInfo) {
+      getUserInfo()
+        .then((res) => {
+          //存store
+          setUserInfo(res);
+          return;
+        })
+        .catch((e) => {
+          Message.error(e);
         });
-        axios.get('/api/user/userInfo').then((res) => {
-          store.dispatch({
-            type: 'update-userInfo',
-            payload: { userInfo: res.data, userLoading: false },
-          });
-        });*!/
-  }*/
+    }
+  };
+  useEffect(() => {
+    fetchUserInfo();
+  }, []);
 
   useEffect(() => {
     changeTheme(theme);
