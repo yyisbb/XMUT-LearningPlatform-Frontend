@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, ReactNode, useRef } from 'react';
 import {
   Table,
   Card,
@@ -6,6 +6,10 @@ import {
   Button,
   Space,
   Typography,
+  Modal,
+  Form,
+  Input,
+  InputNumber,
   Message,
 } from '@arco-design/web-react';
 import PermissionWrapper from '@/components/PermissionWrapper';
@@ -13,13 +17,12 @@ import { IconDownload, IconPlus } from '@arco-design/web-react/icon';
 import SearchForm from './form';
 import styles from './style/index.module.less';
 import { getColumns } from './constants';
-import { getAllUser, getUserInfo } from '@/api/user';
-import AddUserForm from '@/pages/systemManager/userList/addUserForm';
-import { getRoleList } from '@/api/role';
+import { generateAuthCode, getAuthCodeList } from '@/api/authCode';
+import { FormInstance } from '@arco-design/web-react/es/Form';
 
 const { Title } = Typography;
 
-function UserList() {
+function AuthCodeList() {
   const tableCallback = async (record, type) => {
     console.log(record, type);
   };
@@ -37,7 +40,7 @@ function UserList() {
 
   const columns = useMemo(() => getColumns(tableCallback), []);
   const [visible, setVisible] = useState(false);
-  const [roleList, setRoleList] = useState([]);
+  const formRef = useRef<FormInstance>();
 
   useEffect(() => {
     fetchData();
@@ -47,7 +50,7 @@ function UserList() {
     const { current, pageSize } = pagination;
     setLoading(true);
 
-    getAllUser({ current, pageSize, ...formParams })
+    getAuthCodeList({ current, pageSize, ...formParams })
       .then((res) => {
         setData(res.list);
         setPatination({
@@ -73,18 +76,37 @@ function UserList() {
 
   function handleSearch(params) {
     setPatination({ ...pagination, current: 1 });
+    console.log(params);
     setFormParams(params);
   }
 
-  const addUserBtn = async () => {
+  const createBtn = () => {
     setVisible(true);
-    const data = await getRoleList({ current: 1, pageSize: 100 });
-    setRoleList(data.list);
   };
-
+  const onOk = () => {
+    formRef.current.validate().then((values) => {
+      const { school, count } = values;
+      generateAuthCode({ school, count })
+        .then((res) => {
+          fetchData();
+          Message.success('新增成功');
+        })
+        .catch((e) => {
+          Message.error('新增失败: ' + e);
+        })
+        .finally(() => {
+          setLoading(false);
+          setVisible(false);
+        });
+    });
+  };
+  const cancel = () => {
+    formRef.current.resetFields();
+    setVisible(false);
+  };
   return (
     <Card>
-      <Title heading={6}>用户管理</Title>
+      <Title heading={6}>授权码管理</Title>
       <SearchForm onSearch={handleSearch} />
       <PermissionWrapper
         requiredPermissions={[
@@ -93,20 +115,46 @@ function UserList() {
       >
         <div className={styles['button-group']}>
           <Space>
-            <Button onClick={addUserBtn} type="primary" icon={<IconPlus />}>
+            <Button onClick={createBtn} type="primary" icon={<IconPlus />}>
               新建
             </Button>
-            <AddUserForm
-              roleList={roleList}
-              visible={visible}
-              setVisible={setVisible}
-            />
-            <Button>批量导入</Button>
           </Space>
           <Space>
             <Button icon={<IconDownload />}>下载</Button>
           </Space>
         </div>
+        <Modal
+          title="新增授权码"
+          visible={visible}
+          onOk={onOk}
+          onCancel={cancel}
+          autoFocus={false}
+          focusLock={true}
+        >
+          <Form ref={formRef} autoComplete="off">
+            <Form.Item
+              rules={[{ required: true }]}
+              field={'school'}
+              label="院校名"
+            >
+              <Input allowClear placeholder="请输入院校名..." />
+            </Form.Item>
+            <Form.Item
+              rules={[{ required: true }]}
+              field={'count'}
+              label="生成数量"
+            >
+              <InputNumber
+                mode="button"
+                min={1}
+                max={20}
+                placeholder={'请输入数量...'}
+                size={'default'}
+                style={{ width: 160 }}
+              />
+            </Form.Item>
+          </Form>
+        </Modal>
       </PermissionWrapper>
       <Table
         rowKey="id"
@@ -120,4 +168,4 @@ function UserList() {
   );
 }
 
-export default UserList;
+export default AuthCodeList;

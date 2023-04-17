@@ -5,12 +5,20 @@ import LoginForm from './form';
 import LoginBanner from './banner';
 import styles from './style/index.module.less';
 import Register from '@/pages/login/register';
+import { getToken } from '@/store/token';
+import { useHistory } from 'react-router';
 
 function Login() {
   const [pageChange, setPageChange] = useState(true);
+  const history = useHistory();
 
   useEffect(() => {
     document.body.setAttribute('arco-theme', 'light');
+
+    if (getToken() && window.location.pathname === '/login') {
+      history.push('/dashboard/workplace');
+      return;
+    }
   }, []);
 
   return (
@@ -39,6 +47,7 @@ function Login() {
     </div>
   );
 }
+
 Login.displayName = 'LoginPage';
 
 export default Login;

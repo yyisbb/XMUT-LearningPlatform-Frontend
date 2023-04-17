@@ -38,6 +38,10 @@ export const routes: IRoute[] = [
         name: 'API管理',
         key: 'systemManager/apiList',
       },
+      {
+        name: '授权码管理',
+        key: 'systemManager/authCodeList',
+      },
     ],
   },
   {

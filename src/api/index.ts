@@ -36,11 +36,6 @@ request.interceptors.response.use(
       Message.error('Token校验失败');
       return;
     }
-    //授权异常
-    if (err.response?.status === 403) {
-      window.location.href = '/';
-      return;
-    }
     throw err.response.data.msg;
   }
 );

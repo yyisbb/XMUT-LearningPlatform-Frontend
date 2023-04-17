@@ -26,6 +26,7 @@ import lazyload from './utils/lazyload';
 import styles from './style/layout.module.less';
 import { useGlobalStore } from '@/store/global';
 import { getToken } from '@/store/token';
+import { loginAPI } from '@/api/user';
 
 const MenuItem = Menu.Item;
 const SubMenu = Menu.SubMenu;
@@ -120,6 +121,7 @@ function PageLayout() {
     if (!getToken()) {
       history.push('/login');
       Message.error('请登录后操作');
+      return;
     }
   }, []);
 
