@@ -11,3 +11,7 @@ export async function getUserInfo() {
 export async function getAllUser(opts: any) {
   return request.post<any, any>('/user/getAllUser', opts);
 }
+
+export async function updateStatus(opts: any) {
+  return request.post<any, any>('/user/updateStatus', opts);
+}

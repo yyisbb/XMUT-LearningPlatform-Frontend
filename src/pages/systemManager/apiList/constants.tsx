@@ -52,11 +52,12 @@ export function getColumns(
       headerCellStyle: { paddingLeft: '15px' },
       render: (_, record) => (
         <Button
-          type="text"
+          type="primary"
           size="small"
+          status={'danger'}
           onClick={() => callback(record, 'view')}
         >
-          查看
+          删除
         </Button>
       ),
     },

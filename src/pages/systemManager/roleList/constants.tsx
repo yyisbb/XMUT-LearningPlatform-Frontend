@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Typography, Badge } from '@arco-design/web-react';
+import { Button, Typography, Badge, Space } from '@arco-design/web-react';
 import IconText from './icons/text.svg';
 import IconHorizontalVideo from './icons/horizontal.svg';
 import IconVerticalVideo from './icons/vertical.svg';
@@ -46,13 +46,26 @@ export function getColumns(
       dataIndex: 'operations',
       headerCellStyle: { paddingLeft: '15px' },
       render: (_, record) => (
-        <Button
-          type="text"
-          size="small"
-          onClick={() => callback(record, 'view')}
-        >
-          查看
-        </Button>
+        <>
+          <Space>
+            <Button
+              type="primary"
+              size="small"
+              status={'warning'}
+              onClick={() => callback(record, 'setPermission')}
+            >
+              设置权限
+            </Button>
+            <Button
+              type="primary"
+              size="small"
+              status={'danger'}
+              onClick={() => callback(record, 'delete')}
+            >
+              删除
+            </Button>
+          </Space>
+        </>
       ),
     },
   ];

@@ -13,14 +13,22 @@ import { IconDownload, IconPlus } from '@arco-design/web-react/icon';
 import SearchForm from './form';
 import styles from './style/index.module.less';
 import { getColumns } from './constants';
-import { getAllUser, getUserInfo } from '@/api/user';
-import AddUserForm from '@/pages/systemManager/userList/addUserForm';
-import { getRoleList } from '@/api/role';
+import { getAllUser, updateStatus } from '@/api/user';
 
 const { Title } = Typography;
 
 function UserList() {
   const tableCallback = async (record, type) => {
+    updateStatus({ username: record.username })
+      .then((res) => {
+        fetchData();
+      })
+      .catch((e) => {
+        Message.error('error ' + e);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
     console.log(record, type);
   };
 
@@ -78,8 +86,6 @@ function UserList() {
 
   const addUserBtn = async () => {
     setVisible(true);
-    const data = await getRoleList({ current: 1, pageSize: 100 });
-    setRoleList(data.list);
   };
 
   return (
@@ -92,17 +98,6 @@ function UserList() {
         ]}
       >
         <div className={styles['button-group']}>
-          <Space>
-            <Button onClick={addUserBtn} type="primary" icon={<IconPlus />}>
-              新建
-            </Button>
-            <AddUserForm
-              roleList={roleList}
-              visible={visible}
-              setVisible={setVisible}
-            />
-            <Button>批量导入</Button>
-          </Space>
           <Space>
             <Button icon={<IconDownload />}>下载</Button>
           </Space>
