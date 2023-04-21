@@ -14,6 +14,7 @@ import {
   IconMenuFold,
   IconMenuUnfold,
   IconSettings,
+  IconList,
 } from '@arco-design/web-react/icon';
 import qs from 'query-string';
 import NProgress from 'nprogress';
@@ -26,7 +27,6 @@ import lazyload from './utils/lazyload';
 import styles from './style/layout.module.less';
 import { useGlobalStore } from '@/store/global';
 import { getToken } from '@/store/token';
-import { loginAPI } from '@/api/user';
 
 const MenuItem = Menu.Item;
 const SubMenu = Menu.SubMenu;
@@ -40,6 +40,8 @@ function getIconFromKey(key) {
       return <IconDashboard className={styles.icon} />;
     case 'settings':
       return <IconSettings className={styles.icon} />;
+    case 'list':
+      return <IconList className={styles.icon} />;
     case 'example':
       return <IconTag className={styles.icon} />;
     default:

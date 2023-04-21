@@ -3,8 +3,6 @@ import { FormInstance } from '@arco-design/web-react/es/Form';
 import { IconLock, IconUser } from '@arco-design/web-react/icon';
 import React, { useEffect, useRef, useState } from 'react';
 import styles from './style/index.module.less';
-import { getUserInfo, loginAPI } from '@/api/user';
-import { getToken, setToken } from '@/store/token';
 import { useHistory } from 'react-router';
 import { useUserInfoStore } from '@/store/user';
 import { shallow } from 'zustand/shallow';

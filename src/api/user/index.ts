@@ -15,3 +15,6 @@ export async function getAllUser(opts: any) {
 export async function updateStatus(opts: any) {
   return request.post<any, any>('/user/updateStatus', opts);
 }
+export async function insertUserRole(opts: any) {
+  return request.post<any, any>('/user/insertUserRole', opts);
+}

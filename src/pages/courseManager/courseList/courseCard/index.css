@@ -1,0 +1,21 @@
+.card-with-icon-hover .icon-hover {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  transition: all 0.1s;
+}
+
+.card-with-icon-hover .icon-hover:hover {
+  background-color: rgb(var(--gray-2));
+}
+
+.card-with-icon-hover {
+  transition: transform 0.15s ease-out;
+}
+
+.card-with-icon-hover:hover {
+  transform: scale(1.05);
+}

@@ -45,6 +45,22 @@ export const routes: IRoute[] = [
     ],
   },
   {
+    name: '教师功能',
+    key: 'list',
+    children: [
+      {
+        name: '课程列表',
+        key: 'courseManager/courseList',
+      },
+      {
+        name: '课程章节',
+        key: 'courseManager/chapter',
+        ignore: true,
+        breadcrumb: true,
+      },
+    ],
+  },
+  {
     name: '示例',
     key: 'example',
   },

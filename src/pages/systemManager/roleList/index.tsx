@@ -18,8 +18,15 @@ import { IconDownload, IconPlus } from '@arco-design/web-react/icon';
 import SearchForm from './form';
 import styles from './style/index.module.less';
 import { getColumns } from './constants';
-import { createRole, deleteRole, getRoleList } from '@/api/role';
+import {
+  createRole,
+  deleteRole,
+  getRoleList,
+  getRolePermissionList,
+  insertRolePermissions,
+} from '@/api/role';
 import { FormInstance } from '@arco-design/web-react/es/Form';
+import { getPermissionList } from '@/api/permission';
 
 const { Title } = Typography;
 
@@ -42,6 +49,30 @@ function RoleList() {
           });
         break;
       case 'setPermission':
+        const { id } = record;
+        setRoleId(id);
+        getRolePermissionList({ id })
+          .then((res) => {
+            setTargetKeys(
+              res.allowPermission.map((item, index) => `${item.id}`)
+            );
+            getPermissionList({})
+              .then((res) => {
+                setDataSource(
+                  res.list.map((item, index) => ({
+                    key: `${item.id}`,
+                    value: item.name,
+                  }))
+                );
+              })
+              .finally(() => {
+                setLoading(false);
+              });
+          })
+          .catch((e) => {
+            Message.error('请求失败: ' + e);
+          });
+
         setTransferVisible(true);
         break;
     }
@@ -50,7 +81,9 @@ function RoleList() {
   const [visible, setVisible] = useState(false);
   const [transferVisible, setTransferVisible] = useState(false);
   const formRef = useRef<FormInstance>();
-
+  const [dataSource, setDataSource] = useState([]);
+  const [targetKeys, setTargetKeys] = useState([]);
+  const [roleId, setRoleId] = useState(0);
   const [data, setData] = useState([]);
   const [pagination, setPatination] = useState<PaginationProps>({
     sizeCanChange: true,
@@ -128,15 +161,19 @@ function RoleList() {
     setVisible(false);
   };
 
-  const transferVisibleCancel = () => {
-    setVisible(false);
+  const onTransferOK = () => {
+    insertRolePermissions({ roleId, permissionIds: targetKeys })
+      .then((res) => {
+        Message.success('成功');
+      })
+      .catch((e) => {
+        Message.error('失败: ' + e);
+      })
+      .finally(() => {
+        setLoading(false);
+        setTransferVisible(false);
+      });
   };
-
-  const dataSource = new Array(100).fill(null).map((_, index) => ({
-    key: `${index + 1}`,
-    value: `Option ${index + 1}`,
-  }));
-
   return (
     <Card>
       <Title heading={6}>角色管理</Title>
@@ -148,18 +185,18 @@ function RoleList() {
         onCancel={() => {
           setTransferVisible(false);
         }}
+        onOk={onTransferOK}
         focusLock={true}
       >
         <Transfer
           dataSource={dataSource}
-          oneWay
           pagination
-          onChange={(leftSelectedKeys, rightSelectedKeys) => {
-            console.log(leftSelectedKeys);
-            console.log(rightSelectedKeys);
+          oneWay
+          simple
+          targetKeys={targetKeys}
+          onChange={(l, r) => {
+            setTargetKeys(l);
           }}
-          defaultTargetKeys={['1', '2', '3']}
-          defaultSelectedKeys={['4', '6', '7']}
           titleTexts={['未分配权限', '已分配权限']}
         />
       </Modal>

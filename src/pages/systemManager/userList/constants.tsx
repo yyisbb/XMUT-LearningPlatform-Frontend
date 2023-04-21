@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Typography, Badge, Tag } from '@arco-design/web-react';
+import { Button, Typography, Badge, Tag, Space } from '@arco-design/web-react';
 import IconText from './icons/text.svg';
 import IconHorizontalVideo from './icons/horizontal.svg';
 import IconVerticalVideo from './icons/vertical.svg';
@@ -72,14 +72,32 @@ export function getColumns(
       dataIndex: 'operations',
       headerCellStyle: { paddingLeft: '15px' },
       render: (_, record) => (
-        <Button
-          type="primary"
-          size="small"
-          status={record.status ? 'danger' : 'success'}
-          onClick={() => callback(record, 'view')}
-        >
-          {record.status ? '禁用' : '启用'}
-        </Button>
+        <Space>
+          {record.access.roleSn !== 'admin' ? (
+            <Button
+              type="primary"
+              size="small"
+              status="default"
+              onClick={() => callback(record, 'role')}
+            >
+              修改角色
+            </Button>
+          ) : (
+            ''
+          )}
+          {record.access.roleSn !== 'admin' ? (
+            <Button
+              type="primary"
+              size="small"
+              status={record.status ? 'danger' : 'success'}
+              onClick={() => callback(record, 'status')}
+            >
+              {record.status ? '禁用' : '启用'}
+            </Button>
+          ) : (
+            ''
+          )}
+        </Space>
       ),
     },
   ];

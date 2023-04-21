@@ -48,22 +48,30 @@ export function getColumns(
       render: (_, record) => (
         <>
           <Space>
-            <Button
-              type="primary"
-              size="small"
-              status={'warning'}
-              onClick={() => callback(record, 'setPermission')}
-            >
-              设置权限
-            </Button>
-            <Button
-              type="primary"
-              size="small"
-              status={'danger'}
-              onClick={() => callback(record, 'delete')}
-            >
-              删除
-            </Button>
+            {record.sn !== 'admin' ? (
+              <Button
+                type="primary"
+                size="small"
+                status={'warning'}
+                onClick={() => callback(record, 'setPermission')}
+              >
+                设置权限
+              </Button>
+            ) : (
+              ''
+            )}
+            {record.sn !== 'admin' ? (
+              <Button
+                type="primary"
+                size="small"
+                status={'danger'}
+                onClick={() => callback(record, 'delete')}
+              >
+                删除
+              </Button>
+            ) : (
+              ''
+            )}
           </Space>
         </>
       ),
