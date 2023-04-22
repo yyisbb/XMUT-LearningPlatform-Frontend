@@ -7,3 +7,6 @@ export async function getTeacherAllCourse(opts: any) {
 export async function addCourse(opts: any) {
   return request.post<any, any>('/course/addCourse', opts);
 }
+export async function getCourseByCourseId(opts: any) {
+  return request.post<any, any>('/course/getCourseByCourseId', opts);
+}

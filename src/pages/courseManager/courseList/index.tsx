@@ -202,7 +202,7 @@ function CourseList() {
         <Row gutter={20}>
           {data.courseList.list.length !== 0 ? (
             data.courseList.list.map((item, index) => (
-              <Col span={6} key={item.id}>
+              <Col span={4} key={item.id}>
                 <CourseCard user={data.user} item={item} />
               </Col>
             ))

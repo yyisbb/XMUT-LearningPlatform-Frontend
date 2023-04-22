@@ -93,9 +93,6 @@ function Navbar({}: { show: boolean }) {
       </div>
       <ul className={styles.right}>
         <li>
-          <Input.Search className={styles.round} placeholder="输入内容查询" />
-        </li>
-        <li>
           <MessageBox>
             <IconButton icon={<IconNotification />} />
           </MessageBox>

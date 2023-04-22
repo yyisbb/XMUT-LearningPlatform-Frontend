@@ -6,6 +6,8 @@ import {
 } from '@arco-design/web-react/icon';
 import { Avatar, Card, Space, Typography } from '@arco-design/web-react';
 import './index.css';
+import { useHistory } from 'react-router';
+
 const { Meta } = Card;
 
 interface CourseCardProps {
@@ -13,6 +15,7 @@ interface CourseCardProps {
     cover?: string;
     name?: string;
     description?: string;
+    id?: number;
   };
   user?: {
     name?: string;
@@ -21,13 +24,21 @@ interface CourseCardProps {
 
 function CourseCard(props: CourseCardProps) {
   const { item = {}, user = {} } = props;
-
+  const history = useHistory();
   return (
     <Card
+      onClick={() => {
+        if (item.name) {
+          history.push({
+            pathname: '/courseManager/chapter',
+            state: { id: item.id },
+          });
+        }
+      }}
       bordered
       hoverable
       className="card-with-icon-hover"
-      style={{ maxWidth: '336px', margin: '5px 0px' }}
+      style={{ cursor: 'pointer', maxWidth: '336px', margin: '5px 0px' }}
       cover={
         <div style={{ height: 204, overflow: 'hidden' }}>
           <img
