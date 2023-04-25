@@ -172,6 +172,7 @@ function CourseList() {
                 listType="picture-card"
                 multiple
                 imagePreview
+                accept={'.jpeg,.png,.webp,.jpg'}
                 limit={1}
                 onRemove={(file, fileList) => {
                   setFileList([]);

@@ -1,0 +1,29 @@
+.list-demo-actions-button[tabindex]:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-primary-light-3);
+}
+
+.list-demo-actions-button {
+  position: relative;
+  padding: 0 4px;
+  border-radius: 2px;
+  color: rgb(var(--arcoblue-6));
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.list-demo-actions-button:hover {
+  background-color: var(--color-fill-3);
+}
+
+.list-demo-actions
+  .arco-list-item-action
+  li:not(:last-child)
+  .list-demo-actions-button::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  right: -10px;
+  width: 1px;
+  height: 12px;
+  background-color: var(--color-fill-3);
+}
