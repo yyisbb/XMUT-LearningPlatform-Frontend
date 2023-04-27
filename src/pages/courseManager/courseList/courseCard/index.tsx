@@ -1,10 +1,15 @@
 import React from 'react';
 import {
+  IconBytedanceColor,
+  IconGitlab,
+  IconLarkColor,
   IconMore,
   IconShareInternal,
   IconThumbUp,
+  IconTiktokColor,
+  IconTwitter,
 } from '@arco-design/web-react/icon';
-import { Avatar, Card, Space, Typography } from '@arco-design/web-react';
+import { Avatar, Card, Space, Tag, Typography } from '@arco-design/web-react';
 import './index.css';
 import { useHistory } from 'react-router';
 
@@ -16,6 +21,7 @@ interface CourseCardProps {
     name?: string;
     description?: string;
     id?: number;
+    className?: string;
   };
   user?: {
     name?: string;
@@ -52,22 +58,17 @@ function CourseCard(props: CourseCardProps) {
         </div>
       }
       actions={[
-        <span key={1} className="icon-hover">
-          <IconThumbUp />
-        </span>,
-        <span key={2} className="icon-hover">
-          <IconShareInternal />
-        </span>,
-        <span key={3} className="icon-hover">
-          <IconMore />
-        </span>,
+        <Tag key={1} color="red" icon={<IconLarkColor />}>
+          {item.className}
+        </Tag>,
       ]}
     >
       <Meta
         avatar={
           <Space>
-            <Avatar size={30}>{user.name}</Avatar>
-            <Typography.Text>{user.name}</Typography.Text>
+            <Tag color="blue" icon={<IconBytedanceColor />}>
+              教师:{user.name}
+            </Tag>
           </Space>
         }
         title={item.name || '示例课程'}

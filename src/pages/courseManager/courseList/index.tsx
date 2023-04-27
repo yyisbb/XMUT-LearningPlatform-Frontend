@@ -80,10 +80,17 @@ function CourseList() {
         Message.error('请上传课程封面');
         return;
       }
-      const { time, name, description } = values;
+      const { time, name, className, description } = values;
       const [startTime, endTime] = time;
       setLoading(true);
-      addCourse({ name, startTime, description, endTime, cover: fileUrl })
+      addCourse({
+        name,
+        startTime,
+        className,
+        description,
+        endTime,
+        cover: fileUrl,
+      })
         .then((res) => {
           Message.success('新增成功');
           fetchData();
@@ -149,6 +156,13 @@ function CourseList() {
               label="课程名"
             >
               <Input allowClear placeholder="请输入课程名..." />
+            </Form.Item>
+            <Form.Item
+              rules={[{ required: true }]}
+              field={'className'}
+              label="班级名"
+            >
+              <Input allowClear placeholder="请输入班级名..." />
             </Form.Item>
             <Form.Item
               rules={[{ required: true }]}
