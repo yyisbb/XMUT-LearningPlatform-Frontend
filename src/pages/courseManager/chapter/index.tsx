@@ -12,8 +12,16 @@ import {
   Menu,
   Message,
   Modal,
+  Select,
   Space,
   Upload,
+  Slider,
+  InputNumber,
+  Table,
+  TableColumnProps,
+  PaginationProps,
+  Statistic,
+  Progress,
 } from '@arco-design/web-react';
 import { Collapse } from '@arco-design/web-react';
 
@@ -29,11 +37,15 @@ import {
   updateChapterPPT,
 } from '@/api/chapter';
 import {
+  IconCode,
   IconDelete,
   IconDown,
   IconEdit,
+  IconHistory,
   IconPlus,
   IconRightCircle,
+  IconScan,
+  IconStar,
 } from '@arco-design/web-react/icon';
 import { DataType } from '@arco-design/web-react/es/Descriptions/interface';
 import { createPermission } from '@/api/permission';
@@ -43,7 +55,13 @@ import { addTask, deleteTask, updateTaskVideo } from '@/api/task';
 import './index.css';
 import Plyr, { APITypes } from 'plyr-react';
 import 'plyr-react/plyr.css';
-
+import { createSign, getSignBySignId, getSignListByCourseId } from '@/api/sign';
+import Title from '@arco-design/web-react/lib/Typography/title';
+import { Grid } from '@arco-design/web-react';
+import dayjs from 'dayjs';
+import Countdown from '@/components/Countdown';
+const Row = Grid.Row;
+const Col = Grid.Col;
 interface Task {
   id: number;
   name: string;
@@ -63,6 +81,16 @@ interface Chapter {
   taskList?: Array<Task>;
 }
 
+interface SignDetail {
+  id: number;
+  startTime: string;
+  endTime?: string;
+  signCode?: string;
+  expire?: number;
+  total?: number;
+  signCount?: number;
+}
+
 const iconStyle = {
   marginRight: 8,
   fontSize: 16,
@@ -72,6 +100,7 @@ const iconStyle = {
 export default function Chapter(props) {
   //课程ID
   const id = props.location.state.id;
+  const courseGroupId = props.location.state.courseGroupId;
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<Array<Chapter>>([]);
   const [chapter, setChapter] = useState<any>({});
@@ -80,6 +109,11 @@ export default function Chapter(props) {
     {
       key: 'id',
       label: 'ID',
+      value: '',
+    },
+    {
+      key: 'courseCode',
+      label: '课程码',
       value: '',
     },
     {
@@ -98,22 +132,24 @@ export default function Chapter(props) {
       value: '',
     },
     {
-      key: 'description',
-      label: '课程描述',
-      value: '',
-    },
-    {
       key: 'createTime',
       label: '课程创建',
       value: '',
     },
+    {
+      key: 'description',
+      label: '课程描述',
+      value: '',
+    },
   ]);
   const [visible, setVisible] = useState(false);
+  const [visibleSignDetail, setVisibleSignDetail] = useState(false);
   const [visibleVideo, setVisibleVideo] = useState(false);
   const [visibleChapter, setVisibleChapter] = useState(false);
   const [visibleTask, setVisibleTask] = useState(false);
   const [visiblePreview, setVisiblePreView] = useState(false);
   const [visibleVideoPreview, setVisibleVideoPreview] = useState(false);
+  const [visibleSign, setVisibleSign] = useState(false);
   const formRef = useRef<FormInstance>();
   const chapterFormRef = useRef<FormInstance>();
   const taskFormRef = useRef<FormInstance>();
@@ -121,9 +157,39 @@ export default function Chapter(props) {
   const [fileList, setFileList] = useState([]);
   const [fileUrl, setFileUrl] = useState('');
   const [sources, setSources] = useState([]);
+  const [signList, setSignList] = useState([]);
+  const [signDetail, setSignDetail] = useState<SignDetail>({
+    endTime: '',
+    expire: 0,
+    id: 0,
+    signCode: '',
+    signCount: 0,
+    startTime: '',
+    total: 0,
+  });
   const ref = useRef<APITypes>(null);
+  const [duration, setDuration] = useState(15);
+  const [pagination, setPatination] = useState<PaginationProps>({
+    sizeCanChange: true,
+    showTotal: true,
+    pageSize: 10,
+    current: 1,
+    pageSizeChangeResetCurrent: true,
+  });
+
+  const [timerId, setTimerId] = useState(null);
+
+  function onChangeTable({ current, pageSize }) {
+    setPatination({
+      ...pagination,
+      current,
+      pageSize,
+    });
+  }
+
   useEffect(() => {
     fetchData();
+    fetchSign();
   }, []);
 
   const updatePPT = (chapter) => {
@@ -159,7 +225,26 @@ export default function Chapter(props) {
       setLoading(false);
     };
   }, []);
-
+  const fetchSign = () => {
+    const { current, pageSize } = pagination;
+    setLoading(true);
+    getSignListByCourseId({ courseId: id })
+      .then((res) => {
+        setSignList(res.list);
+        setPatination({
+          ...pagination,
+          current,
+          pageSize,
+          total: res.total,
+        });
+      })
+      .catch((e) => {
+        Message.error('查询签到列表失败: ' + e);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
   const fetchData = () => {
     setLoading(true);
     getCourseByCourseId({ id })
@@ -179,7 +264,7 @@ export default function Chapter(props) {
       });
 
     setLoading(true);
-    getCourseAllChapter({ courseId: id })
+    getCourseAllChapter({ id })
       .then((res) => {
         setData(res);
       })
@@ -278,7 +363,7 @@ export default function Chapter(props) {
     chapterFormRef.current.validate().then((values) => {
       const { name } = values;
       setLoading(true);
-      createChapter({ name, courseId: id })
+      createChapter({ name, courseGroupId })
         .then((res) => {
           Message.success('新增成功');
           fetchData();
@@ -302,7 +387,13 @@ export default function Chapter(props) {
       const { time, name } = values;
       const [startTime, endTime] = time;
       setLoading(true);
-      releasePreView({ name, startTime, endTime, chapterId: chapter.id })
+      releasePreView({
+        courseId: id,
+        name,
+        startTime,
+        endTime,
+        chapterId: chapter.id,
+      })
         .then((res) => {
           Message.success('新增成功');
           fetchData();
@@ -434,6 +525,58 @@ export default function Chapter(props) {
       });
   };
 
+  const columns: TableColumnProps[] = [
+    {
+      title: 'ID',
+      dataIndex: 'id',
+    },
+    {
+      title: '开始时间',
+      dataIndex: 'startTime',
+    },
+    {
+      title: '结束时间',
+      dataIndex: 'endTime',
+    },
+    {
+      title: '操作',
+      dataIndex: 'op',
+      render: (_, record) => (
+        <Button
+          onClick={() => {
+            // 发请求获取签到详情
+            const { id } = record;
+            getSignBySignId({ signId: id })
+              .then((res) => {
+                setSignDetail(res);
+                setVisibleSignDetail(true);
+                // 每 3 秒更新签到详情数据
+                const timerId = setInterval(() => {
+                  getSignBySignId({ signId: id })
+                    .then((res) => {
+                      setSignDetail(res);
+                    })
+                    .catch((e) => {
+                      Message.error('获取签到详情失败: ' + e);
+                    });
+                }, 3000);
+                setTimerId(timerId);
+              })
+              .catch((e) => {
+                Message.error('获取签到详情失败: ' + e);
+              })
+              .finally(() => {
+                setLoading(false);
+              });
+          }}
+          type="outline"
+          status="default"
+        >
+          查看签到详情
+        </Button>
+      ),
+    },
+  ];
   return (
     <>
       <Space size={16} direction="vertical" style={{ width: '100%' }}>
@@ -445,7 +588,32 @@ export default function Chapter(props) {
             title="课程信息"
             data={detailData}
           />
+          <Space style={{ marginTop: 10 }}>
+            <Button
+              type="primary"
+              onClick={() => {
+                setVisibleSign(true);
+              }}
+              icon={<IconScan />}
+            >
+              发布签到
+            </Button>
+          </Space>
         </Card>
+        {signList.length !== 0 ? (
+          <Card loading={loading}>
+            <Title heading={6}>签到记录</Title>
+            <Table
+              rowKey="id"
+              onChange={onChangeTable}
+              pagination={pagination}
+              columns={columns}
+              data={signList}
+            />
+          </Card>
+        ) : (
+          ''
+        )}
 
         <Card loading={loading}>
           {data.length === 0 ? (
@@ -562,6 +730,7 @@ export default function Chapter(props) {
         onClick={addChapterBtn}
         icon={<IconPlus style={{ width: '20px', height: '20px' }} />}
       />
+
       <Modal
         title="添加章节"
         visible={visibleChapter}
@@ -684,6 +853,92 @@ export default function Chapter(props) {
             />
           </Form.Item>
         </Form>
+      </Modal>
+
+      <Modal
+        title="发布签到任务"
+        visible={visibleSign}
+        autoFocus={false}
+        focusLock={true}
+        onOk={() => {
+          setLoading(true);
+          createSign({ courseId: id, duration })
+            .then((res) => {
+              Message.success('创建成功');
+              fetchSign();
+              setVisibleSign(false);
+            })
+            .catch((e) => {
+              Message.error('创建失败: ' + e);
+            })
+            .finally(() => {
+              setLoading(false);
+              setDuration(15);
+            });
+        }}
+        onCancel={() => {
+          setVisibleSign(false);
+        }}
+      >
+        <Form.Item label={'持续时长'}>
+          <InputNumber
+            style={{ width: 160 }}
+            min={5}
+            mode="button"
+            max={30}
+            value={duration}
+            onChange={(value) => {
+              setDuration(value);
+            }}
+            step={1}
+          />
+        </Form.Item>
+      </Modal>
+
+      <Modal
+        title="签到情况"
+        visible={visibleSignDetail}
+        autoFocus={false}
+        focusLock={true}
+        onOk={() => {
+          clearInterval(timerId);
+          setVisibleSignDetail(false);
+        }}
+        onCancel={() => {
+          clearInterval(timerId);
+          setVisibleSignDetail(false);
+        }}
+        style={{ textAlign: 'center' }} // 让 Modal 内容居中对齐
+      >
+        <Space direction={'vertical'}>
+          <div style={{ textAlign: 'center' }}>
+            {' '}
+            {/* 包裹容器，让其内部行内块级元素居中对齐 */}
+            <Statistic
+              title="签到码"
+              value={signDetail.signCode}
+              styleValue={{ color: '#0fbf60' }}
+              style={{ display: 'inline-block' }} // 将 Statistic 转换为行内块级元素
+            />
+          </div>
+          <Button type={'text'}>切换签到码</Button>
+          <Progress
+            type="circle"
+            size={'large'}
+            color={{
+              '0%': 'rgb(var(--primary-6))',
+              '100%': 'rgb(var(--success-6))',
+            }}
+            formatText={(val) =>
+              `${signDetail.signCount} / ${signDetail.total}`
+            }
+            percent={(signDetail.signCount / signDetail.total) * 100}
+            style={{
+              margin: '0 20px',
+            }}
+          />
+          <Countdown targetDate={signDetail.endTime} />
+        </Space>
       </Modal>
     </>
   );

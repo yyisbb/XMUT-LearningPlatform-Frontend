@@ -1,15 +1,5 @@
 import React from 'react';
-import {
-  IconBytedanceColor,
-  IconGitlab,
-  IconLarkColor,
-  IconMore,
-  IconShareInternal,
-  IconThumbUp,
-  IconTiktokColor,
-  IconTwitter,
-} from '@arco-design/web-react/icon';
-import { Avatar, Card, Space, Tag, Typography } from '@arco-design/web-react';
+import { Card, Space, Tag, Typography } from '@arco-design/web-react';
 import './index.css';
 import { useHistory } from 'react-router';
 
@@ -22,6 +12,7 @@ interface CourseCardProps {
     description?: string;
     id?: number;
     className?: string;
+    groupId?: string;
   };
   user?: {
     name?: string;
@@ -37,7 +28,7 @@ function CourseCard(props: CourseCardProps) {
         if (item.name) {
           history.push({
             pathname: '/courseManager/chapter',
-            state: { id: item.id },
+            state: { id: item.id, courseGroupId: item.groupId },
           });
         }
       }}
@@ -57,17 +48,13 @@ function CourseCard(props: CourseCardProps) {
           />
         </div>
       }
-      actions={[
-        <Tag key={1} color="red" icon={<IconLarkColor />}>
-          {item.className}
-        </Tag>,
-      ]}
     >
       <Meta
         avatar={
           <Space>
-            <Tag color="blue" icon={<IconBytedanceColor />}>
-              教师:{user.name}
+            <Tag color="blue">教师: {user.name}</Tag>
+            <Tag key={1} color="red">
+              {item.className}
             </Tag>
           </Space>
         }

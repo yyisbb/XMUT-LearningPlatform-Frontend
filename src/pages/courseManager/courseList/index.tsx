@@ -7,7 +7,7 @@ import {
   Message,
   Modal,
   Pagination,
-  PaginationProps,
+  Select,
   Space,
   Typography,
   Upload,
@@ -15,29 +15,45 @@ import {
 import { Button } from '@arco-design/web-react';
 
 import { Grid } from '@arco-design/web-react';
-import { IconPlus } from '@arco-design/web-react/icon';
+import { IconCopy, IconPlus } from '@arco-design/web-react/icon';
 import CourseCard from '@/pages/courseManager/courseList/courseCard';
 import { addCourse, getTeacherAllCourse } from '@/api/course';
 import { FormInstance } from '@arco-design/web-react/es/Form';
 import { uploadFile } from '@/api/file';
+import { Tabs } from '@arco-design/web-react';
+
+const TabPane = Tabs.TabPane;
+const Option = Select.Option;
 
 const Row = Grid.Row;
 const Col = Grid.Col;
 const TextArea = Input.TextArea;
 
 interface Course {
-  courseList: {
-    list: Array<any>;
-    total: number;
+  courseListDTO: {
+    nowCourseList: {
+      list: Array<any>;
+      total: number;
+    };
+    beforeCourseList: {
+      list: Array<any>;
+      total: number;
+    };
   };
   user: any;
 }
 
 function CourseList() {
   const [data, setData] = useState<Course>({
-    courseList: {
-      list: [],
-      total: 0,
+    courseListDTO: {
+      nowCourseList: {
+        list: [],
+        total: 0,
+      },
+      beforeCourseList: {
+        list: [],
+        total: 0,
+      },
     },
     user: {},
   });
@@ -46,19 +62,24 @@ function CourseList() {
   const [total, setTotal] = useState(0);
   const [pageSize, setPageSize] = useState(8);
   const [visible, setVisible] = React.useState(false);
+  const [copyVisible, setCopyVisible] = React.useState(false);
   const formRef = useRef<FormInstance>();
+  const copyFormRef = useRef<FormInstance>();
   const [fileList, setFileList] = useState([]);
+  const [groupId, setGroupId] = useState('');
   const [fileUrl, setFileUrl] = useState('');
+  const [activeTab, setActiveTab] = useState('1');
+
   useEffect(() => {
     fetchData();
-  }, [current]);
+  }, [current, activeTab]);
 
   const fetchData = () => {
     setLoading(true);
     getTeacherAllCourse({ current, pageSize })
       .then((res) => {
         setData(res);
-        setTotal(res.courseList.total);
+        setTotal(res.courseListDTO.nowCourseList.total);
       })
       .catch((e) => {
         Message.error('新增失败: ' + e);
@@ -72,6 +93,10 @@ function CourseList() {
     setVisible(true);
     setFileList([]);
     setFileUrl('');
+  };
+
+  const copyCourseBtn = () => {
+    setCopyVisible(true);
   };
 
   const onOk = () => {
@@ -112,6 +137,32 @@ function CourseList() {
     setFileUrl('');
   };
 
+  const onCopyOk = () => {
+    copyFormRef.current.validate().then((values) => {
+      const { className } = values;
+      setLoading(true);
+      addCourse({
+        className,
+        groupId,
+      })
+        .then((res) => {
+          Message.success('新增成功');
+          fetchData();
+          setCopyVisible(false);
+        })
+        .catch((e) => {
+          Message.error('新增失败: ' + e);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    });
+  };
+
+  const onCopyCancel = () => {
+    setCopyVisible(false);
+  };
+
   useEffect(() => {
     return () => {
       setVisible(false);
@@ -141,6 +192,39 @@ function CourseList() {
   return (
     <Space size={16} direction="vertical" style={{ width: '100%' }}>
       <Card loading={loading}>
+        <Modal
+          title="从已有课程复制课程内容"
+          visible={copyVisible}
+          onOk={onCopyOk}
+          onCancel={onCopyCancel}
+          autoFocus={false}
+          focusLock={true}
+        >
+          <Form ref={copyFormRef} autoComplete="off">
+            <Form.Item label="课程">
+              <Select
+                placeholder="已自动合并同类课程"
+                onChange={(value) => {
+                  setGroupId(value);
+                }}
+                style={{ width: '100%' }}
+              >
+                {data.courseListDTO.nowCourseList.list.map((option) => (
+                  <Option key={option.id} value={option.groupId}>
+                    {option.name}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+            <Form.Item
+              rules={[{ required: true }]}
+              field={'className'}
+              label="班级名"
+            >
+              <Input allowClear placeholder="请输入班级名..." />
+            </Form.Item>
+          </Form>
+        </Modal>
         <Modal
           title="添加课程"
           visible={visible}
@@ -209,36 +293,73 @@ function CourseList() {
           }}
           shape="circle"
           type="primary"
+          onClick={copyCourseBtn}
+          icon={<IconCopy style={{ width: '20px', height: '20px' }} />}
+        />
+        <Button
+          style={{
+            right: '30px',
+            bottom: '100px',
+            position: 'fixed',
+            zIndex: 100,
+            width: '60px',
+            height: '60px',
+          }}
+          shape="circle"
+          type="primary"
           onClick={addCourseBtn}
           icon={<IconPlus style={{ width: '20px', height: '20px' }} />}
         />
         <Typography.Title heading={6}>课程列表</Typography.Title>
 
-        <Row gutter={20}>
-          {data.courseList.list.length !== 0 ? (
-            data.courseList.list.map((item, index) => (
-              <Col span={4} key={item.id}>
-                <CourseCard user={data.user} item={item} />
-              </Col>
-            ))
+        <Tabs activeTab={activeTab} onChange={setActiveTab}>
+          <TabPane key="1" title="在授课程">
+            <Row gutter={20}>
+              {data.courseListDTO.nowCourseList.list.length !== 0 ? (
+                data.courseListDTO.nowCourseList.list.map((item, index) => (
+                  <Col span={4} key={item.id}>
+                    <CourseCard user={data.user} item={item} />
+                  </Col>
+                ))
+              ) : (
+                <CourseCard user={data.user} />
+              )}
+            </Row>
+            <Pagination
+              onChange={(pageNumber, pageSize) => {
+                setCurrent(pageNumber);
+                setPageSize(pageSize);
+              }}
+              current={current}
+              pageSize={pageSize}
+              total={total}
+              style={{
+                marginTop: '5px',
+                display: 'flex',
+                justifyContent: 'center',
+              }}
+            />
+          </TabPane>
+          {data.courseListDTO.beforeCourseList.list.length !== 0 ? (
+            <TabPane key="2" title="归档课程">
+              <Row gutter={20}>
+                {data.courseListDTO.beforeCourseList.list.length !== 0 ? (
+                  data.courseListDTO.beforeCourseList.list.map(
+                    (item, index) => (
+                      <Col span={4} key={item.id}>
+                        <CourseCard user={data.user} item={item} />
+                      </Col>
+                    )
+                  )
+                ) : (
+                  <CourseCard user={data.user} />
+                )}
+              </Row>
+            </TabPane>
           ) : (
-            <CourseCard user={data.user} />
+            ''
           )}
-        </Row>
-        <Pagination
-          onChange={(pageNumber, pageSize) => {
-            setCurrent(pageNumber);
-            setPageSize(pageSize);
-          }}
-          current={current}
-          pageSize={pageSize}
-          total={total}
-          style={{
-            marginTop: '5px',
-            display: 'flex',
-            justifyContent: 'center',
-          }}
-        />
+        </Tabs>
       </Card>
     </Space>
   );
