@@ -65,8 +65,8 @@ export default function LoginForm(props: LoginForm) {
 
   return (
     <div className={styles['login-form-wrapper']}>
-      <div className={styles['login-form-title']}>登录 Arco Design Pro</div>
-      <div className={styles['login-form-sub-title']}>登录 Arco Design Pro</div>
+      <div className={styles['login-form-title']}>登录 高校教辅平台</div>
+      <div className={styles['login-form-sub-title']}>登录 高校教辅平台</div>
       <Form
         className={styles['login-form']}
         layout="vertical"

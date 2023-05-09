@@ -1,6 +1,13 @@
 import React, { useContext } from 'react';
 import dayjs from 'dayjs';
-import { Form, Input, DatePicker, Button, Grid } from '@arco-design/web-react';
+import {
+  Form,
+  Input,
+  DatePicker,
+  Button,
+  Grid,
+  Space,
+} from '@arco-design/web-react';
 import { GlobalContext } from '@/context';
 import { IconRefresh, IconSearch } from '@arco-design/web-react/icon';
 import styles from './style/index.module.less';
@@ -60,12 +67,14 @@ function SearchForm(props: {
         </Row>
       </Form>
       <div className={styles['right-button']}>
-        <Button type="primary" icon={<IconSearch />} onClick={handleSubmit}>
-          查询
-        </Button>
-        <Button icon={<IconRefresh />} onClick={handleReset}>
-          重置
-        </Button>
+        <Space direction={'vertical'}>
+          <Button type="primary" icon={<IconSearch />} onClick={handleSubmit}>
+            查询
+          </Button>
+          <Button icon={<IconRefresh />} onClick={handleReset}>
+            重置
+          </Button>
+        </Space>
       </div>
     </div>
   );

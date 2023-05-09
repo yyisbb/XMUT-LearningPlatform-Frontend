@@ -22,9 +22,12 @@ import {
   PaginationProps,
   Statistic,
   Progress,
+  Link,
 } from '@arco-design/web-react';
 import { Collapse } from '@arco-design/web-react';
+import { Typography } from '@arco-design/web-react';
 
+const { Text, Paragraph } = Typography;
 const CollapseItem = Collapse.Item;
 import { List, Avatar } from '@arco-design/web-react';
 import { useEffect, useRef, useState } from 'react';
@@ -37,31 +40,36 @@ import {
   updateChapterPPT,
 } from '@/api/chapter';
 import {
-  IconCode,
   IconDelete,
   IconDown,
+  IconDownload,
   IconEdit,
-  IconHistory,
   IconPlus,
   IconRightCircle,
   IconScan,
-  IconStar,
 } from '@arco-design/web-react/icon';
-import { DataType } from '@arco-design/web-react/es/Descriptions/interface';
-import { createPermission } from '@/api/permission';
 import { FormInstance } from '@arco-design/web-react/es/Form';
 import { uploadFile } from '@/api/file';
 import { addTask, deleteTask, updateTaskVideo } from '@/api/task';
 import './index.css';
 import Plyr, { APITypes } from 'plyr-react';
 import 'plyr-react/plyr.css';
-import { createSign, getSignBySignId, getSignListByCourseId } from '@/api/sign';
+import {
+  changeSignCode,
+  createSign,
+  getSignBySignId,
+  getSignListByCourseId,
+  getSignRecordBySignId,
+} from '@/api/sign';
 import Title from '@arco-design/web-react/lib/Typography/title';
 import { Grid } from '@arco-design/web-react';
 import dayjs from 'dayjs';
 import Countdown from '@/components/Countdown';
+import { getCourseAllWork, getWorkByWorkId } from '@/api/homework';
+
 const Row = Grid.Row;
 const Col = Grid.Col;
+
 interface Task {
   id: number;
   name: string;
@@ -79,6 +87,7 @@ interface Chapter {
   createTime: string;
   updateTime?: string;
   taskList?: Array<Task>;
+  preview?: any;
 }
 
 interface SignDetail {
@@ -89,6 +98,15 @@ interface SignDetail {
   expire?: number;
   total?: number;
   signCount?: number;
+}
+
+interface WorkDetail {
+  id: number;
+  startTime: string;
+  endTime?: string;
+  name?: string;
+  detail?: string;
+  filePath?: string;
 }
 
 const iconStyle = {
@@ -144,6 +162,8 @@ export default function Chapter(props) {
   ]);
   const [visible, setVisible] = useState(false);
   const [visibleSignDetail, setVisibleSignDetail] = useState(false);
+  const [visibleSignRecord, setVisibleSignRecord] = useState(false);
+  const [visibleWorkDetail, setVisibleWorkDetail] = useState(false);
   const [visibleVideo, setVisibleVideo] = useState(false);
   const [visibleChapter, setVisibleChapter] = useState(false);
   const [visibleTask, setVisibleTask] = useState(false);
@@ -158,6 +178,8 @@ export default function Chapter(props) {
   const [fileUrl, setFileUrl] = useState('');
   const [sources, setSources] = useState([]);
   const [signList, setSignList] = useState([]);
+  const [workList, setWorkList] = useState([]);
+  const [signRecord, setSignRecordList] = useState([]);
   const [signDetail, setSignDetail] = useState<SignDetail>({
     endTime: '',
     expire: 0,
@@ -167,12 +189,26 @@ export default function Chapter(props) {
     startTime: '',
     total: 0,
   });
+
+  const [workDetail, setWorkDetail] = useState<WorkDetail>({
+    id: 0,
+    filePath: '',
+    name: '',
+    startTime: '',
+    endTime: '',
+  });
   const ref = useRef<APITypes>(null);
   const [duration, setDuration] = useState(15);
   const [pagination, setPatination] = useState<PaginationProps>({
-    sizeCanChange: true,
     showTotal: true,
-    pageSize: 10,
+    pageSize: 5,
+    current: 1,
+    pageSizeChangeResetCurrent: true,
+  });
+
+  const [workPagination, setWorkPatination] = useState<PaginationProps>({
+    showTotal: true,
+    pageSize: 5,
     current: 1,
     pageSizeChangeResetCurrent: true,
   });
@@ -187,9 +223,18 @@ export default function Chapter(props) {
     });
   }
 
+  function onWorkChangeTable({ current, pageSize }) {
+    setPatination({
+      ...workPagination,
+      current,
+      pageSize,
+    });
+  }
+
   useEffect(() => {
     fetchData();
     fetchSign();
+    fetchWork();
   }, []);
 
   const updatePPT = (chapter) => {
@@ -225,6 +270,28 @@ export default function Chapter(props) {
       setLoading(false);
     };
   }, []);
+
+  const fetchWork = () => {
+    const { current, pageSize } = workPagination;
+    setLoading(true);
+    getCourseAllWork({ courseId: id })
+      .then((res) => {
+        setWorkList(res.list);
+        setWorkPatination({
+          ...workPagination,
+          current,
+          pageSize,
+          total: res.total,
+        });
+      })
+      .catch((e) => {
+        Message.error('查询作业列表失败: ' + e);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
+
   const fetchSign = () => {
     const { current, pageSize } = pagination;
     setLoading(true);
@@ -245,6 +312,7 @@ export default function Chapter(props) {
         setLoading(false);
       });
   };
+
   const fetchData = () => {
     setLoading(true);
     getCourseByCourseId({ id })
@@ -525,6 +593,42 @@ export default function Chapter(props) {
       });
   };
 
+  const fetchSignByID = (id, doFunc) => {
+    getSignBySignId({ signId: id })
+      .then((res) => {
+        setSignDetail(res);
+        setVisibleSignDetail(true);
+        if (doFunc !== null) {
+          doFunc();
+        }
+      })
+      .catch((e) => {
+        Message.error('获取签到详情失败: ' + e);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
+
+  const signRecordColumns: TableColumnProps[] = [
+    {
+      title: 'ID',
+      dataIndex: 'id',
+    },
+    {
+      title: '姓名',
+      dataIndex: 'name',
+    },
+    {
+      title: '用户名',
+      dataIndex: 'username',
+    },
+    {
+      title: '学号',
+      dataIndex: 'studentId',
+    },
+  ];
+
   const columns: TableColumnProps[] = [
     {
       title: 'ID',
@@ -542,14 +646,12 @@ export default function Chapter(props) {
       title: '操作',
       dataIndex: 'op',
       render: (_, record) => (
-        <Button
-          onClick={() => {
-            // 发请求获取签到详情
-            const { id } = record;
-            getSignBySignId({ signId: id })
-              .then((res) => {
-                setSignDetail(res);
-                setVisibleSignDetail(true);
+        <Space>
+          <Button
+            onClick={() => {
+              // 发请求获取签到详情
+              const { id } = record;
+              fetchSignByID(id, function () {
                 // 每 3 秒更新签到详情数据
                 const timerId = setInterval(() => {
                   getSignBySignId({ signId: id })
@@ -561,9 +663,76 @@ export default function Chapter(props) {
                     });
                 }, 3000);
                 setTimerId(timerId);
+              });
+            }}
+            type="outline"
+            status="default"
+          >
+            查看签到详情
+          </Button>
+
+          <Button
+            onClick={() => {
+              // 发请求获取签到详情
+              const { id } = record;
+              getSignRecordBySignId({ signId: id })
+                .then((res) => {
+                  setSignRecordList(res);
+                  setVisibleSignRecord(true);
+                })
+                .catch((e) => {
+                  Message.error('获取签到人数列表失败: ' + e);
+                })
+                .finally(() => {
+                  setLoading(false);
+                });
+            }}
+            type="outline"
+            status="warning"
+          >
+            查看未签人数
+          </Button>
+        </Space>
+      ),
+    },
+  ];
+
+  const workColumns: TableColumnProps[] = [
+    {
+      title: 'ID',
+      dataIndex: 'id',
+    },
+    {
+      title: '作业名',
+      dataIndex: 'name',
+    },
+    {
+      title: '对应章节名',
+      dataIndex: 'chapterName',
+    },
+    {
+      title: '开始时间',
+      dataIndex: 'startTime',
+    },
+    {
+      title: '结束时间',
+      dataIndex: 'endTime',
+    },
+    {
+      title: '操作',
+      dataIndex: 'op',
+      render: (_, record) => (
+        <Button
+          onClick={() => {
+            // 发请求获取签到详情
+            const { id } = record;
+            getWorkByWorkId({ workId: id })
+              .then((res) => {
+                setWorkDetail(res);
+                setVisibleWorkDetail(true);
               })
               .catch((e) => {
-                Message.error('获取签到详情失败: ' + e);
+                Message.error('获取作业详情失败: ' + e);
               })
               .finally(() => {
                 setLoading(false);
@@ -572,7 +741,7 @@ export default function Chapter(props) {
           type="outline"
           status="default"
         >
-          查看签到详情
+          查看作业详情
         </Button>
       ),
     },
@@ -600,20 +769,16 @@ export default function Chapter(props) {
             </Button>
           </Space>
         </Card>
-        {signList.length !== 0 ? (
-          <Card loading={loading}>
-            <Title heading={6}>签到记录</Title>
-            <Table
-              rowKey="id"
-              onChange={onChangeTable}
-              pagination={pagination}
-              columns={columns}
-              data={signList}
-            />
-          </Card>
-        ) : (
-          ''
-        )}
+        <Card loading={loading}>
+          <Title heading={6}>签到记录</Title>
+          <Table
+            rowKey="id"
+            onChange={onChangeTable}
+            pagination={pagination}
+            columns={columns}
+            data={signList}
+          />
+        </Card>
 
         <Card loading={loading}>
           {data.length === 0 ? (
@@ -628,15 +793,19 @@ export default function Chapter(props) {
                   extra={
                     <>
                       <Space>
-                        <Button
-                          onClick={() => {
-                            setVisiblePreView(true);
-                            setChapter(chapter);
-                          }}
-                          status={'success'}
-                        >
-                          发布预习
-                        </Button>
+                        {chapter.preview === null ? (
+                          <Button
+                            onClick={() => {
+                              setVisiblePreView(true);
+                              setChapter(chapter);
+                            }}
+                            status={'success'}
+                          >
+                            发布预习
+                          </Button>
+                        ) : (
+                          ''
+                        )}
                         <Dropdown
                           trigger={'click'}
                           droplist={
@@ -713,6 +882,30 @@ export default function Chapter(props) {
               ))}
             </Collapse>
           )}
+        </Card>
+
+        <Card loading={loading}>
+          <Title heading={6}>课程作业</Title>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginBottom: '20px',
+            }}
+          >
+            <Space>
+              <Button type={'primary'} status={'success'} icon={<IconPlus />}>
+                新增作业
+              </Button>
+            </Space>
+          </div>
+          <Table
+            rowKey="id"
+            onChange={onWorkChangeTable}
+            pagination={workPagination}
+            columns={workColumns}
+            data={workList}
+          />
         </Card>
       </Space>
 
@@ -910,35 +1103,95 @@ export default function Chapter(props) {
         }}
         style={{ textAlign: 'center' }} // 让 Modal 内容居中对齐
       >
-        <Space direction={'vertical'}>
-          <div style={{ textAlign: 'center' }}>
-            {' '}
-            {/* 包裹容器，让其内部行内块级元素居中对齐 */}
-            <Statistic
-              title="签到码"
-              value={signDetail.signCode}
-              styleValue={{ color: '#0fbf60' }}
-              style={{ display: 'inline-block' }} // 将 Statistic 转换为行内块级元素
+        <Card loading={loading}>
+          <Space direction={'vertical'}>
+            <div style={{ textAlign: 'center' }}>
+              {' '}
+              {/* 包裹容器，让其内部行内块级元素居中对齐 */}
+              <Statistic
+                title="签到码"
+                value={signDetail.signCode}
+                styleValue={{ color: '#0fbf60' }}
+                style={{ display: 'inline-block' }} // 将 Statistic 转换为行内块级元素
+              />
+            </div>
+            <Button
+              onClick={() => {
+                changeSignCode({ signId: signDetail.id })
+                  .then((res) => {
+                    Message.success('更换签到码成功');
+                    fetchSignByID(signDetail.id, null);
+                  })
+                  .catch((e) => {
+                    Message.error('更换签到码失败: ' + e);
+                  });
+              }}
+              type={'text'}
+            >
+              切换签到码
+            </Button>
+            <Progress
+              type="circle"
+              size={'large'}
+              color={{
+                '0%': 'rgb(var(--primary-6))',
+                '100%': 'rgb(var(--success-6))',
+              }}
+              formatText={(val) =>
+                `${signDetail.signCount} / ${signDetail.total}`
+              }
+              percent={(signDetail.signCount / signDetail.total) * 100}
+              style={{
+                margin: '0 20px',
+              }}
             />
-          </div>
-          <Button type={'text'}>切换签到码</Button>
-          <Progress
-            type="circle"
-            size={'large'}
-            color={{
-              '0%': 'rgb(var(--primary-6))',
-              '100%': 'rgb(var(--success-6))',
-            }}
-            formatText={(val) =>
-              `${signDetail.signCount} / ${signDetail.total}`
-            }
-            percent={(signDetail.signCount / signDetail.total) * 100}
-            style={{
-              margin: '0 20px',
-            }}
-          />
-          <Countdown targetDate={signDetail.endTime} />
-        </Space>
+            <Countdown targetDate={signDetail.endTime} />
+          </Space>
+        </Card>
+      </Modal>
+
+      <Modal
+        title="作业详情"
+        visible={visibleWorkDetail}
+        autoFocus={false}
+        focusLock={true}
+        onOk={() => {
+          setVisibleWorkDetail(false);
+        }}
+        onCancel={() => {
+          setVisibleWorkDetail(false);
+        }}
+      >
+        <Card
+          style={{ backgroundColor: '#e2e1e4' }}
+          title="Arco Card"
+          hoverable
+          extra={workDetail.filePath !== null ? <Link>附件下载</Link> : ''}
+        >
+          {workDetail.detail}
+        </Card>
+      </Modal>
+
+      <Modal
+        title="未签人数"
+        visible={visibleSignRecord}
+        onOk={() => setVisibleSignRecord(false)}
+        onCancel={() => setVisibleSignRecord(false)}
+      >
+        <Table
+          columns={signRecordColumns}
+          data={signRecord}
+          pagination={false}
+          border={{
+            headerCell: true,
+            wrapper: true,
+          }}
+          rowKey="id"
+          rowSelection={{
+            type: 'checkbox',
+            checkAll: true,
+          }}
+        ></Table>
       </Modal>
     </>
   );

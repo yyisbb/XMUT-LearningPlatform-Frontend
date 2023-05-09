@@ -11,3 +11,11 @@ export async function getSignListByCourseId(opts: any) {
 export async function getSignBySignId(opts: any) {
   return request.post<any, any>('/sign/getSignBySignId', opts);
 }
+
+export async function changeSignCode(opts: any) {
+  return request.post<any, any>('/sign/changeSignCode', opts);
+}
+
+export async function getSignRecordBySignId(opts: any) {
+  return request.post<any, any>('/sign/getSignRecordBySignId', opts);
+}
